@@ -2,23 +2,21 @@ import {createElement} from './didact/vdom.js'
 import {createDom} from './didact/dom.js'
 
 let nextUnitOfWork = null
+let wipRoot = null
 
 function render(element, container) {
-  nextUnitOfWork = {
+  wipRoot = {
     dom: container,
     props: {
         children: [element]
     }
   }
+  nextUnitOfWork = wipRoot
 }
 
 function performUnitOfWork(fiber) {
   if (!fiber.dom) { // si aucun élément du dom ne correspond
     fiber.dom = createDom(fiber)
-  }
-
-  if (fiber.parent) { // si la fibre à un parent, on lui ajoute le dom que l'on vient de générer
-    fiber.parent.dom.appendChild(fiber.dom)
   }
 
   const elements = fiber.props.children
@@ -59,6 +57,19 @@ function performUnitOfWork(fiber) {
   return null;
 }
 
+function commitWork(fiber) {
+  if (!fiber) return
+  const domParent = fiber.parent.dom
+  domParent.appendChild(fiber.dom)
+  commitWork(fiber.child)
+  commitWork(fiber.sibling)
+}
+
+function commitRoot() {
+  commitWork(wipRoot.child)
+  wipRoot = null
+}
+
 function workLoop(deadline) {
   let shouldYield = false
 
@@ -66,6 +77,11 @@ function workLoop(deadline) {
     nextUnitOfWork = performUnitOfWork(nextUnitOfWork)
     shouldYield = deadline.timeRemaining() < 1
   }
+
+  if (!nextUnitOfWork && wipRoot) {
+    commitRoot()
+  }
+
   requestIdleCallback(workLoop)
 }
 
