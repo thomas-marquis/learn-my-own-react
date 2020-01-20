@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>My Own React</title>
+    <script src="didact.js" type="module"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/6.26.0/babel.min.js"></script>
+</head>
+<body>
+
+<div id="root"></div>
+
+<script type="text/babel">
+    /** @jsx Didact.createElement */
+    const element = <div id="foo">
+        <h1>Coucou tout le monde!</h1>
+        <a href="#">En savoir plus</a>
+    </div>
+    console.log(element);
+    Didact.render(element, document.getElementById("root"));
+</script>
+
+</body>
+</html>
