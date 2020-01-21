@@ -1,17 +1,79 @@
 import {createElement} from './didact/vdom.js'
-import {createDom} from './didact/dom.js'
+import {createDom, updateDom} from './didact/dom.js'
+
+const DELETION_TAG = 'DELETION';
+const PLACEMENT_TAG = 'PLACEMENT';
+const UPDATE_TAG = 'UPDATE';
 
 let nextUnitOfWork = null
 let wipRoot = null
+let currentRoot = null
+let deletions = []
 
 function render(element, container) {
   wipRoot = {
     dom: container,
     props: {
         children: [element]
-    }
+    },
+    alternate: currentRoot
   }
   nextUnitOfWork = wipRoot
+  deletions = []
+}
+
+function reconcileChildren(wipFiber, elements) {
+  let index = 0
+  let prevSibling = null
+  let oldFiber = wipFiber.alternate && wipFiber.alternate.child
+  let newFiber = null
+
+  while (index < elements.length || oldFiber) {
+    const element = elements[index]
+    const sameType = oldFiber && element && oldFiber.type === element.type
+
+    // console.log(element, sameType, oldFiber, [...deletions]);
+
+    if (sameType) {// modification d'un élément
+      newFiber = {
+        type: element.type,
+        props: element.props,
+        parent: wipFiber,
+        dom: oldFiber.dom, // on recycle le dom
+        alternate: oldFiber,
+        effectTag: UPDATE_TAG
+      }
+    }
+
+    if (element && !sameType) { // ajout d'un élément
+      newFiber = {
+        type: element.type,
+        props: element.props,
+        parent: wipFiber,
+        dom: null, // le dom n'xiste pas encore
+        alternate: null,
+        effectTag: PLACEMENT_TAG
+      }
+    }
+
+    if (oldFiber && !sameType) { // suppression d'un élément
+      oldFiber.effectTag = DELETION_TAG
+      deletions.push(oldFiber)
+    }
+
+    if (oldFiber) {
+      oldFiber = oldFiber.sibling
+    }
+
+    if (index === 0) {
+      wipFiber.child = newFiber
+    } else if (element) {
+      prevSibling.sibling = newFiber
+    }
+
+    prevSibling = newFiber
+    index++
+  }
 }
 
 function performUnitOfWork(fiber) {
@@ -20,29 +82,8 @@ function performUnitOfWork(fiber) {
   }
 
   const elements = fiber.props.children
-  let index = 0
-  let prevSibling = null
 
-  while (index < elements.length) {
-    const element = elements[index]
-    const newFiber = {
-      type: element.type,
-      props: element.props,
-      parent: fiber,
-      dom: null
-    }
-
-    if (index === 0) {
-      fiber.child = newFiber
-    } else {
-      prevSibling.sibling = newFiber
-    }
-
-    prevSibling = newFiber
-    index++
-  }
-
-  console.log('fiber', fiber);
+  reconcileChildren(fiber, elements)
 
   if (fiber.child) {
     return fiber.child
@@ -59,14 +100,28 @@ function performUnitOfWork(fiber) {
 
 function commitWork(fiber) {
   if (!fiber) return
+
   const domParent = fiber.parent.dom
-  domParent.appendChild(fiber.dom)
+
+  if (fiber.effectTag === PLACEMENT_TAG && fiber.dom !== null) {
+    domParent.appendChild(fiber.dom)
+
+  } else if (fiber.effectTag === DELETION_TAG) {
+    domParent.removeChild(fiber.dom)
+    return
+
+  } else if (fiber.effectTag === UPDATE_TAG && fiber.dom !== null) {
+    updateDom(fiber.dom, fiber.alternate.props, fiber.props)
+  }
+
   commitWork(fiber.child)
   commitWork(fiber.sibling)
 }
 
 function commitRoot() {
+  deletions.forEach(commitWork)
   commitWork(wipRoot.child)
+  currentRoot = wipRoot
   wipRoot = null
 }
 

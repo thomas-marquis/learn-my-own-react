@@ -11,3 +11,25 @@ export function createDom({type, props}) {
 
   return dom
 }
+
+const isProperty = name => name !== 'children'
+
+export function updateDom(dom, prevProps, nextProps) {
+  // supprime les anciennes props
+  Object.keys(prevProps)
+    .filter(isProperty)
+    .forEach(name => {
+      if(!(name in nextProps)) {
+        dom[name] = ''
+      }
+    })
+
+  // ajoute ou modifie les nouvelles props
+  Object.keys(nextProps)
+    .filter(isProperty)
+    .forEach(name => {
+      if (prevProps[name] !== nextProps[name]) {
+        dom[name] = nextProps[name]
+      }
+    })
+}

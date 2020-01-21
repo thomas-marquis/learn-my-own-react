@@ -15,19 +15,15 @@
     const element = <div id="foo">
         <h1>Coucou tout le monde!</h1>
         <a href="#">En savoir plus</a>
-        <div>
-            <p>dhsgfjhgfegfgezfgezgfgcjhdvsfdhsgfjhgfegfgezfgezgfgcjhdvsfdhsgfjhgfegfgezfgezgfgcjhdvsfdhsgfjhgfegfgezfgezgfgcjhdvsf</p>
-        </div>
     </div>
-
     Didact.render(element, document.getElementById("root"));
 
     window.setTimeout(() => {
-      const element = (
-        <div id="foo">
-            <a href="#">en safoir plus ici !</a>
-        </div>
-      )
+      console.log('RERENDER');
+      const element = <div id="foo">
+        <h1>Coucou tout le monde!!!</h1>
+        <a href="#toto">En savoir plus !</a>
+      </div>
       Didact.render(element, document.getElementById("root"));
     }, 2000)
 
