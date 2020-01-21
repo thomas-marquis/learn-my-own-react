@@ -12,10 +12,16 @@
 
 <script type="text/babel">
     /** @jsx Didact.createElement */
+
+    function Title({name}) {
+      return <h1>{name}</h1>
+    }
+
+
     function step1() {
       console.log('step1');
       const element = <div id="foo">
-        <h1>Coucou tout le monde!</h1>
+        <Title name="Coucou tout le monde!" />
         <button onClick={step2}>En savoir plus</button>
       </div>
       Didact.render(element, document.getElementById("root"));

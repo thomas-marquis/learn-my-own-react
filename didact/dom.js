@@ -19,24 +19,16 @@ const getEventName = name => name.toLowerCase().substring(2)
 
 /**
  *
- * @param {string} type
- * @param {{}} props
+ * @param {Fiber}  fiber
  * @returns {Text | Node}
  */
-export function createDom({type, props}) {
+export function createDom(fiber) {
+  const {type, props} = fiber
   const dom = type === 'TEXT_ELEMENT' ?
     document.createTextNode(props.nodeValue)
     : document.createElement(type)
 
-  Object.keys(props).forEach(name => {
-    if (isProperty(name)) {
-      if (isEvent(name)) {
-        dom.addEventListener(getEventName(name), props[name])
-      } else {
-        dom[name] = props[name]
-      }
-    }
-  })
+  updateDom(dom, {}, props)
 
   return dom
 }
