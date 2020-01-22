@@ -13,15 +13,30 @@
 <script type="text/babel">
     /** @jsx Didact.createElement */
 
-    function Title({name}) {
-      return <h1>{name}</h1>
+    function useIncrement() {
+      const [n, setN] = Didact.useState(0)
+      const increment = () => {
+        setN(n+1)
+      }
+      return [n, increment]
+    }
+
+    function Counter({label}) {
+      const [n, increment] = useIncrement()
+
+      return  (
+        <div>
+            Compteur {label} : {n}
+          <button onClick={increment} >Incrémenter</button>
+        </div>
+      )
     }
 
 
     function step1() {
       console.log('step1');
       const element = <div id="foo">
-        <Title name="Coucou tout le monde!" />
+        <Counter label="de ouf !" />
         <button onClick={step2}>En savoir plus</button>
       </div>
       Didact.render(element, document.getElementById("root"));

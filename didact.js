@@ -10,6 +10,16 @@ let wipRoot = null
 let currentRoot = null
 let deletions = []
 
+/** hooks */
+let hookIndex = null
+/** @type {Fiber} */
+let wipFiber = null
+
+/**
+ * @typedef Hook
+ * @property {*} state
+ */
+
 /**
  * @typedef Fiber
  * @property {Fiber} alternate
@@ -18,6 +28,7 @@ let deletions = []
  * @property {Fiber} child
  * @property {{}} props
  * @property {DELETION_TAG | PLACEMENT_TAG | UPDATE_TAG} effectTag
+ * @property {array<Hook>} hooks
  */
 
 /**
@@ -140,8 +151,29 @@ function updateHostComponent(fiber) {
  * @param {Fiber} fiber
  */
 function updateFunctionComponent(fiber) {
+  wipFiber = fiber
+  hookIndex = 0
+  wipFiber.hooks = []
+
   const children = [fiber.type(fiber.props)]
   reconcileChildren(fiber, children)
+}
+
+function useState (initValue) {
+  const oldHooks = wipFiber.alternate && wipFiber.alternate.hooks && wipFiber.alternate.hooks[hookIndex]
+  /** @type {Hook} */
+  const hook = {
+    state: oldHooks ? oldHooks.state: initValue
+  }
+  wipFiber.hooks.push(hook)
+
+  const setState = state => {
+    hook.state = state
+    render(currentRoot.props.children[0], currentRoot.dom)
+  }
+
+  hookIndex++
+  return [hook.state, setState]
 }
 
 /**
@@ -212,5 +244,6 @@ requestIdleCallback(workLoop)
 
 window.Didact = {
   createElement,
-  render
+  render,
+  useState
 }
